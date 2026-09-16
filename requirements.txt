@@ -1,0 +1,11 @@
+pydantic>=2.6.0
+fastapi>=0.110.0
+uvicorn>=0.27.0
+duckdb>=0.10.0
+drain3>=0.9.11
+python-dateutil>=2.8.2
+streamlit>=1.32.0
+requests>=2.31.0
+httpx>=0.28.0
+pytest>=8.0.0
+

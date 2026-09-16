@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: ntro-log-pipeline-api
+    ports:
+      - "8000:8000"
+    environment:
+      - INFERENCE_BACKEND=heuristic
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  dashboard:
+    build: .
+    container_name: ntro-log-dashboard
+    command: ["streamlit", "run", "ui/dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    ports:
+      - "8501:8501"
+    environment:
+      - INFERENCE_BACKEND=heuristic
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - api
+    restart: unless-stopped
+

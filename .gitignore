@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local databases & run data
+data/*.duckdb
+data/*.sqlite
+data/*.jsonl
+!data/.gitkeep
+
+# Logs & temp benchmark artifacts
+*.log
+benchmark_results.json
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo

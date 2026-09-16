@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live System Stats | AegisLog</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f4f5f8;
+            color: #0f172a;
+            min-height: 100vh;
+        }
+
+        /* NAV */
+        nav {
+            background: rgba(15,23,42,0.95);
+            backdrop-filter: blur(12px);
+            padding: 0 40px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo { width: 36px; height: 36px; background: #1d4ed8; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .nav-title { font-size: 16px; font-weight: 800; color: #fff; }
+        .nav-links { display: flex; gap: 8px; }
+        .nav-link {
+            color: #94a3b8; text-decoration: none; font-size: 13px;
+            font-weight: 600; padding: 6px 14px; border-radius: 8px; transition: all 0.2s;
+        }
+        .nav-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-link.active { color: #fff; background: #1d4ed8; }
+
+        /* PAGE */
+        .page { max-width: 1100px; margin: 0 auto; padding: 40px 20px 80px; }
+
+        /* HEADER */
+        .page-header { margin-bottom: 36px; }
+        .page-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #dbeafe; color: #1d4ed8;
+            padding: 4px 14px; border-radius: 100px;
+            font-size: 12px; font-weight: 700; margin-bottom: 12px;
+        }
+        .live-dot {
+            width: 7px; height: 7px; background: #22d3ee;
+            border-radius: 50%; animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.7); }
+        }
+        .page-title { font-size: 32px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 6px; }
+        .page-sub { font-size: 14px; color: #64748b; }
+        .last-refresh { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+        /* REFRESH BTN */
+        .refresh-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #1d4ed8; color: #fff;
+            border: none; border-radius: 10px;
+            padding: 9px 20px; font-size: 13px; font-weight: 700;
+            cursor: pointer; font-family: inherit; transition: all 0.2s;
+            float: right; margin-top: -10px;
+        }
+        .refresh-btn:hover { background: #1e40af; }
+        .spin { display: inline-block; }
+        .spin.spinning { animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* METRIC CARDS GRID */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+        .metric-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 22px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .metric-label { font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+        .metric-value { font-size: 30px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; }
+        .metric-value.blue { color: #1d4ed8; }
+        .metric-sub { font-size: 12px; color: #94a3b8; margin-top: 4px; font-weight: 600; }
+
+        /* PROGRESS BAR */
+        .bar-bg { background: #f1f5f9; border-radius: 6px; height: 6px; overflow: hidden; margin-top: 10px; }
+        .bar-fill { height: 100%; border-radius: 6px; background: #2563eb; transition: width 0.8s ease; }
+
+        /* TWO-COL */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+
+        /* CARD */
+        .card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .card-title {
+            font-size: 14px; font-weight: 800; color: #0f172a;
+            margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+        }
+
+        /* DISTRIBUTION BARS */
+        .dist-row { margin-bottom: 14px; }
+        .dist-label-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .dist-label { font-size: 13px; font-weight: 700; color: #334155; }
+        .dist-count { font-size: 13px; font-weight: 800; color: #1d4ed8; }
+        .dist-bar-bg { background: #f1f5f9; border-radius: 6px; height: 8px; overflow: hidden; }
+        .dist-bar-fill { height: 100%; border-radius: 6px; transition: width 0.9s ease; }
+        .color-0 { background: #1d4ed8; }
+        .color-1 { background: #3b82f6; }
+        .color-2 { background: #60a5fa; }
+        .color-3 { background: #93c5fd; }
+        .color-4 { background: #6366f1; }
+        .color-5 { background: #8b5cf6; }
+        .color-6 { background: #a78bfa; }
+        .color-7 { background: #c4b5fd; }
+
+        /* ACTION PILLS */
+        .action-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .action-pill {
+            background: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: 12px; padding: 14px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .action-name { font-size: 13px; font-weight: 700; color: #334155; }
+        .action-count {
+            font-size: 14px; font-weight: 900; color: #fff;
+            background: #1d4ed8; padding: 3px 12px;
+            border-radius: 100px;
+        }
+        .action-count.deny { background: #dc2626; }
+        .action-count.drop { background: #f59e0b; color: #0f172a; }
+        .action-count.alert { background: #7c3aed; }
+        .action-count.unknown { background: #64748b; }
+
+        /* PARSERS LIST */
+        .parsers-list { display: flex; flex-direction: column; gap: 10px; }
+        .parser-item {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: 10px; padding: 11px 16px;
+        }
+        .parser-name { font-size: 13px; font-weight: 700; color: #0f172a; font-family: 'Courier New', monospace; }
+        .parser-badge {
+            font-size: 11px; font-weight: 800; color: #1d4ed8;
+            background: #dbeafe; padding: 3px 10px; border-radius: 8px;
+        }
+
+        /* LOADING / ERROR */
+        .loading {
+            text-align: center; padding: 80px 20px;
+            color: #64748b; font-size: 15px; font-weight: 600;
+        }
+        .loading-spinner {
+            font-size: 32px; display: block;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+        .error-box {
+            background: #fef2f2; border: 1px solid #fecaca;
+            border-radius: 14px; padding: 20px 24px;
+            color: #b91c1c; font-weight: 700; font-size: 14px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+            .two-col { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <a class="nav-brand" href="/portal/index.html">
+        <div class="nav-logo">🛡️</div>
+        <span class="nav-title">AegisLog</span>
+    </a>
+    <div class="nav-links">
+        <a href="/portal/index.html" class="nav-link">← Portal</a>
+        <a href="http://localhost:8501" target="_blank" class="nav-link">Dashboard</a>
+        <a href="/docs" target="_blank" class="nav-link">API Docs</a>
+        <a href="/portal/stats.html" class="nav-link active">Live Stats</a>
+    </div>
+</nav>
+
+<!-- PAGE CONTENT -->
+<div class="page">
+
+    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+        <div>
+            <div class="page-badge"><div class="live-dot"></div> LIVE DATA</div>
+            <div class="page-title">📊 Live System Statistics</div>
+            <div class="page-sub">Real-time aggregate metrics from the AegisLog DuckDB analytics engine.</div>
+            <div class="last-refresh" id="last-refresh">Loading...</div>
+        </div>
+        <button class="refresh-btn" onclick="loadStats()">
+            <span class="spin" id="refresh-spin">↻</span> Refresh
+        </button>
+    </div>
+
+    <div id="content">
+        <div class="loading">
+            <span class="loading-spinner">⟳</span>
+            Loading live statistics...
+        </div>
+    </div>
+
+</div>
+
+<script>
+async function loadStats() {
+    const spin = document.getElementById('refresh-spin');
+    spin.classList.add('spinning');
+
+    try {
+        const resp = await fetch('/api/v1/stats');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+        const d = await resp.json();
+        renderStats(d);
+        document.getElementById('last-refresh').textContent = `Last refreshed: ${new Date().toLocaleTimeString()}`;
+    } catch (err) {
+        document.getElementById('content').innerHTML = `
+            <div class="error-box">
+                ⚠️ Could not reach the API: ${err.message}<br/>
+                <span style="font-weight:500; font-size:13px; margin-top:6px; display:block;">
+                    Make sure the FastAPI server is running: <code>.venv\\Scripts\\uvicorn.exe api.app:app --host 127.0.0.1 --port 8000</code>
+                </span>
+            </div>`;
+    } finally {
+        spin.classList.remove('spinning');
+    }
+}
+
+function renderStats(d) {
+    const totalLogs = d.total_logs || 0;
+    const avgConf = ((d.avg_confidence || 0) * 100).toFixed(1);
+    const avgLat = (d.avg_latency_us || 0).toFixed(0);
+    const highConf = d.high_conf_count || 0;
+    const lowConf = d.low_conf_count || 0;
+    const parsers = d.active_registered_parsers || [];
+    const formats = d.formats_distribution || {};
+    const actions = d.actions_distribution || {};
+
+    // Calc max for bars
+    const maxFmt = Math.max(...Object.values(formats), 1);
+    const maxAct = Math.max(...Object.values(actions), 1);
+
+    const fmtBars = Object.entries(formats).map(([k,v], i) => `
+        <div class="dist-row">
+            <div class="dist-label-row">
+                <span class="dist-label">${k}</span>
+                <span class="dist-count">${v.toLocaleString()}</span>
+            </div>
+            <div class="dist-bar-bg"><div class="dist-bar-fill color-${i % 8}" style="width:${Math.round(v/maxFmt*100)}%"></div></div>
+        </div>`).join('');
+
+    const actionColors = {allow:'#1d4ed8', deny:'#dc2626', drop:'#f59e0b', alert:'#7c3aed'};
+    const actionPills = Object.entries(actions).map(([k,v]) => {
+        const cls = ['deny','drop','alert','unknown'].includes(k) ? k : '';
+        return `<div class="action-pill">
+            <span class="action-name">${k.toUpperCase()}</span>
+            <span class="action-count ${cls}">${v.toLocaleString()}</span>
+        </div>`;
+    }).join('');
+
+    const parserItems = parsers.map(p => `
+        <div class="parser-item">
+            <span class="parser-name">${p}</span>
+            <span class="parser-badge">ACTIVE</span>
+        </div>`).join('');
+
+    document.getElementById('content').innerHTML = `
+        <!-- METRIC CARDS -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total Logs Normalized</div>
+                <div class="metric-value blue">${totalLogs.toLocaleString()}</div>
+                <div class="metric-sub">OCSF v1.1 canonical records</div>
+                <div class="bar-bg"><div class="bar-fill" style="width:100%"></div></div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Avg Confidence Score</div>
+                <div class="metric-value ${avgConf >= 80 ? 'blue' : ''}">${avgConf}%</div>
+                <div class="metric-sub">Composite multi-level score</div>
+                <div class="bar-bg"><div class="bar-fill" style="width:${avgConf}%"></div></div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Avg Processing Latency</div>
+                <div class="metric-value">${avgLat} µs</div>
+                <div class="metric-sub">Hot path median latency</div>
+                <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(100, avgLat/5)}%; background:#6366f1"></div></div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">High Confidence Logs</div>
+                <div class="metric-value blue">${highConf.toLocaleString()}</div>
+                <div class="metric-sub">${lowConf.toLocaleString()} awaiting HITL review</div>
+                <div class="bar-bg"><div class="bar-fill" style="width:${totalLogs > 0 ? Math.round(highConf/totalLogs*100) : 0}%"></div></div>
+            </div>
+        </div>
+
+        <!-- FORMAT + ACTIONS -->
+        <div class="two-col">
+            <div class="card">
+                <div class="card-title">📁 Format Distribution</div>
+                ${fmtBars || '<div style="color:#94a3b8;font-size:14px;">No logs ingested yet. Stream some logs from the Dashboard first.</div>'}
+            </div>
+            <div class="card">
+                <div class="card-title">🔐 Security Action Breakdown</div>
+                ${Object.keys(actions).length > 0
+                    ? `<div class="action-grid">${actionPills}</div>`
+                    : '<div style="color:#94a3b8;font-size:14px;">No action data yet.</div>'}
+            </div>
+        </div>
+
+        <!-- PARSERS -->
+        <div class="card">
+            <div class="card-title">⚡ Active Registered Parsers (${parsers.length})</div>
+            <div class="parsers-list">
+                ${parserItems || '<div style="color:#94a3b8;font-size:14px;">No parsers found.</div>'}
+            </div>
+        </div>
+    `;
+}
+
+// Auto-load on page open
+loadStats();
+
+// Auto-refresh every 30 seconds
+setInterval(loadStats, 30000);
+</script>
+</body>
+</html>
+
