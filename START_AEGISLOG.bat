@@ -15,14 +15,14 @@ echo  [1/2] Starting FastAPI Backend + Command Portal Website...
 echo        Website will be available at: http://localhost:8000/portal/index.html
 echo        API Swagger Docs:             http://localhost:8000/docs
 echo.
-start "AegisLog API" cmd /k ".venv\Scripts\uvicorn.exe api.app:app --host 127.0.0.1 --port 8000 --reload"
+start "AegisLog API" cmd /k ".venv\Scripts\python.exe -m uvicorn api.app:app --host 127.0.0.1 --port 8000 --reload"
 
 timeout /t 3 /nobreak >nul
 
 echo  [2/2] Starting Streamlit Analytics Dashboard...
 echo        Dashboard:                    http://localhost:8501
 echo.
-start "AegisLog Dashboard" cmd /k ".venv\Scripts\streamlit.exe run ui\dashboard.py"
+start "AegisLog Dashboard" cmd /k ".venv\Scripts\python.exe -m streamlit run ui\dashboard.py"
 
 timeout /t 4 /nobreak >nul
 
