@@ -106,14 +106,21 @@ class UniversalLogPipeline:
         parse_res: Optional[IntermediateParseResult] = None
         inference_used = False
 
-        # -------------------------------------------------------------
-        # Step 1: Deterministic-First Check (Hot Path)
-        # -------------------------------------------------------------
+        # =========================================================================
+        # STAGE 1: THE FAST TRACK (Hot-Path Check)
+        # Check if the log belongs to a known, pre-compiled format (Cisco, CEF, JSON,
+        # Syslog, Auditd, KeyValue). If matched, parses deterministically in < 200 µs.
+        # =========================================================================
         parser_used, parse_res = self.registry.detect_and_parse(raw_clean)
 
-        # -------------------------------------------------------------
-        # Step 2: Unseen / Novel Format Check (Cold Path / JIT Inference)
-        # -------------------------------------------------------------
+        # =========================================================================
+        # STAGE 2: THE SMART LEARNER (Cold-Path JIT AI Synthesis)
+        # If the log is completely new or unseen:
+        #   1. Drain3 algorithm extracts the structural template (signature hash).
+        #   2. Check if we already learned this signature in our SQLite rule store.
+        #   3. If not, synthesize a new regular expression dynamically, sandbox it,
+        #      and save it so future logs of this type run on the Fast Track!
+        # =========================================================================
         if not parser_used or not parse_res or not parse_res.success:
             cluster_meta = self.template_miner.process_log(raw_clean)
             sig_id = cluster_meta["signature_hash"]
@@ -122,7 +129,7 @@ class UniversalLogPipeline:
             # Check if we already have a learned rule in rule store
             existing_rule = self.rule_store.get_rule(sig_id)
             if existing_rule:
-                # Instantiate and run
+                # Instantiate and run the previously learned rule
                 jit_parser = DynamicRegexParser(
                     signature_id=sig_id,
                     regex_pattern=existing_rule["regex_pattern"],
@@ -149,16 +156,23 @@ class UniversalLogPipeline:
                         self.registry.register(synthesized_parser)
                         inference_used = True
 
-        # -------------------------------------------------------------
-        # Step 3: Generic Fallback (Zero Silent Drops)
-        # -------------------------------------------------------------
+        # =========================================================================
+        # STAGE 3: THE SAFETY NET (Fallback Token Extractor — Zero Silent Drops)
+        # If both Fast Track and AI learning cannot match, rescue every possible IP,
+        # timestamp, port, and action token. The raw log is 100% preserved verbatim.
+        # =========================================================================
         if not parser_used or not parse_res or not parse_res.success:
             parser_used = self.fallback_parser
             parse_res = self.fallback_parser.parse(raw_clean)
 
-        # -------------------------------------------------------------
-        # Step 4: Canonical Normalization & Entity Mapping
-        # -------------------------------------------------------------
+        # =========================================================================
+        # STAGE 4: THE UNIVERSAL TRANSLATOR (Canonical OCSF Normalization)
+        # Standardize heterogeneous fields into the international OCSF v1.1 format:
+        #   - Convert all timestamp styles to standard ISO-8601 UTC
+        #   - Classify IPs (Private vs Public) & determine network direction
+        #   - Standardize actions (ALLOW, DENY, DROP, ALERT) & severities
+        #   - Correlate suspicious activities against MITRE ATT&CK techniques
+        # =========================================================================
         canonical_record = self._map_to_canonical(
             raw_clean=raw_clean,
             parse_res=parse_res,
@@ -167,13 +181,17 @@ class UniversalLogPipeline:
             start_ns=start_ns
         )
 
-        # -------------------------------------------------------------
-        # Step 5: Triage, HITL & Persistence Routing
-        # -------------------------------------------------------------
+        # =========================================================================
+        # STAGE 5: QUALITY CHECK & PERSISTENCE ROUTING (HITL & DuckDB)
+        # System calculates multi-level confidence scores (0-100%):
+        #   - Score >= 60%: High confidence -> directly saved to DuckDB for analytics.
+        #   - Score < 60%: Flagged -> placed in HITL review queue for 1-click analyst
+        #                  correction, and recorded in Dead-Letter audit log.
+        # =========================================================================
         overall_conf = canonical_record.processing_metadata.confidence.overall_confidence
 
         if overall_conf < config.CONFIDENCE_REVIEW_THRESHOLD:
-            # Enqueue for human review
+            # Enqueue for human review in Dashboard Tab 4
             self.review_queue.enqueue(
                 event_id=canonical_record.event.id,
                 raw_log=raw_clean,
@@ -183,7 +201,7 @@ class UniversalLogPipeline:
                 confidence_breakdown=canonical_record.processing_metadata.confidence.model_dump(),
                 warnings=canonical_record.processing_metadata.warnings
             )
-            # Write to Dead-Letter Sink
+            # Write to Dead-Letter Sink for defense forensic audits
             if self.dead_letter_sink:
                 self.dead_letter_sink.write_dead_letter(
                     event_id=canonical_record.event.id,
@@ -194,7 +212,7 @@ class UniversalLogPipeline:
                     warnings=canonical_record.processing_metadata.warnings
                 )
 
-        # Write to DuckDB analytical storage
+        # Write to DuckDB embedded columnar analytical storage
         if self.duckdb_sink:
             self.duckdb_sink.insert_record(canonical_record)
 

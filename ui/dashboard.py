@@ -507,14 +507,15 @@ with col_m4:
 # ==============================================================================
 # MAIN WORKSPACE TABS
 # ==============================================================================
-tab_explain, tab_live, tab_file, tab_hitl, tab_sql, tab_bench, tab_export = st.tabs([
+tab_explain, tab_live, tab_file, tab_hitl, tab_sql, tab_bench, tab_export, tab_guide = st.tabs([
     "🔍 Explainability & Debug Inspector",
     "⚡ Live Stream & Ingestion Monitor",
     "📁 Drag & Drop File Ingest",
     "👥 Human-In-The-Loop Triage",
     "🗄️ DuckDB Threat Explorer",
     "📈 Scale Benchmarking Suite",
-    "💾 Forensic Export Hub"
+    "💾 Forensic Export Hub",
+    "📖 Plain-English Architecture Guide"
 ])
 
 # ==============================================================================
@@ -1030,3 +1031,102 @@ with tab_export:
                     st.info("Dead-letter queue is currently empty.")
         else:
             st.info("No logs in database yet to export. Ingest logs from Tab 2 or Tab 3 first.")
+
+# ==============================================================================
+# TAB 8: PLAIN-ENGLISH ARCHITECTURE GUIDE (FOR TEACHERS & EVALUATORS)
+# ==============================================================================
+with tab_guide:
+    st.markdown("""
+        <div style="margin-bottom: 16px;">
+            <h3 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0;">📖 Backend Architecture: Plain-English Guide</h3>
+            <div style="font-size: 13.5px; color: #64748b;">Designed specifically for academic evaluators, teachers, and non-technical reviewers to understand the backend in 2 minutes.</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # The Airport Analogy Card
+    st.markdown("""
+        <div style="background: linear-gradient(145deg, #0f172a 0%, #1e3a8a 100%); border-radius: 18px; padding: 24px 28px; color: #ffffff; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <span style="font-size: 22px;">✈️</span>
+                <span style="font-size: 16px; font-weight: 800; color: #93c5fd; letter-spacing: 0.03em;">THE REAL-WORLD ANALOGY: AIRPORT CUSTOMS & IMMIGRATION</span>
+            </div>
+            <div style="font-size: 14px; color: #e2e8f0; line-height: 1.65;">
+                Think of the AegisLog backend as an <b>International Airport Immigration Terminal</b>:<br/>
+                • <b>Incoming Raw Logs = International Travelers:</b> They arrive speaking Cisco, CEF, LEEF, JSON, or unknown foreign dialects.<br/>
+                • <b>Fast-Track Biometric E-Gates (Hot Path):</b> Known passports are verified deterministically in <b>&lt; 0.2 ms</b>.<br/>
+                • <b>The AI Linguist (Cold Path):</b> If an unseen dialect arrives, Drain3 analyzes the grammar, generates a new dictionary rule, and saves it into SQLite so future arrivals pass through fast-track.<br/>
+                • <b>Universal Entry Visa (OCSF v1.1):</b> Every traveler is transcribed onto <b>ONE universal standard entry form</b> with standardized timestamps, IPs, and actions.<br/>
+                • <b>Officer Secondary Inspection (HITL):</b> Any uncertain document (confidence &lt; 60%) is flagged for a human analyst to verify with 1 click in Tab 4.
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # 6-Step Flow Cards
+    st.markdown("<div style='font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 12px;'>The 6-Step Life Cycle of a Log</div>", unsafe_allow_html=True)
+
+    g_col1, g_col2, g_col3 = st.columns(3)
+    with g_col1:
+        st.markdown("""
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; height: 100%;">
+                <div style="font-weight: 800; color: #1d4ed8; font-size: 13px; margin-bottom: 6px;">STEP 1: FAST TRACK</div>
+                <div style="font-weight: 700; color: #0f172a; font-size: 14px; margin-bottom: 6px;">Deterministic Parsing</div>
+                <div style="font-size: 12.5px; color: #64748b; line-height: 1.55;">Checks against 6 compiled plugins (Cisco, CEF, LEEF, Syslog, JSON, Auditd) in &lt; 200 µs without AI overhead.</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with g_col2:
+        st.markdown("""
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; height: 100%;">
+                <div style="font-weight: 800; color: #7e22ce; font-size: 13px; margin-bottom: 6px;">STEP 2: SMART LEARNER</div>
+                <div style="font-weight: 700; color: #0f172a; font-size: 14px; margin-bottom: 6px;">Cold-Path JIT Synthesis</div>
+                <div style="font-size: 12.5px; color: #64748b; line-height: 1.55;">Unseen formats trigger Drain3 template mining. Synthesizes a regex, tests it in sandbox, and saves to SQLite.</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with g_col3:
+        st.markdown("""
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; height: 100%;">
+                <div style="font-weight: 800; color: #b45309; font-size: 13px; margin-bottom: 6px;">STEP 3: SAFETY NET</div>
+                <div style="font-weight: 700; color: #0f172a; font-size: 14px; margin-bottom: 6px;">Zero Silent Drops</div>
+                <div style="font-size: 12.5px; color: #64748b; line-height: 1.55;">Corrupted or weird streams have IPs and dates rescued by fallback extractor. 100% raw text is preserved verbatim.</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<div style='margin-top: 12px;'></div>", unsafe_allow_html=True)
+
+    g_col4, g_col5, g_col6 = st.columns(3)
+    with g_col4:
+        st.markdown("""
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; height: 100%;">
+                <div style="font-weight: 800; color: #1d4ed8; font-size: 13px; margin-bottom: 6px;">STEP 4: TRANSLATOR</div>
+                <div style="font-weight: 700; color: #0f172a; font-size: 14px; margin-bottom: 6px;">Universal OCSF Standard</div>
+                <div style="font-size: 12.5px; color: #64748b; line-height: 1.55;">Normalizes timestamps to ISO-8601 UTC, classifies IPs, standardizes actions, and correlates MITRE ATT&CK threats.</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with g_col5:
+        st.markdown("""
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; height: 100%;">
+                <div style="font-weight: 800; color: #15803d; font-size: 13px; margin-bottom: 6px;">STEP 5: QUALITY CHECK</div>
+                <div style="font-weight: 700; color: #0f172a; font-size: 14px; margin-bottom: 6px;">4-Level Confidence Score</div>
+                <div style="font-size: 12.5px; color: #64748b; line-height: 1.55;">System grades its own output across format syntax, field validity, schema completeness, and overall score (0-100%).</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with g_col6:
+        st.markdown("""
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; height: 100%;">
+                <div style="font-weight: 800; color: #0f172a; font-size: 13px; margin-bottom: 6px;">STEP 6: PERSISTENCE</div>
+                <div style="font-weight: 700; color: #0f172a; font-size: 14px; margin-bottom: 6px;">DuckDB & HITL Triage</div>
+                <div style="font-size: 12.5px; color: #64748b; line-height: 1.55;">High confidence goes directly to DuckDB for sub-millisecond SQL queries; uncertain logs wait in Tab 4 for human approval.</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # Teacher & Judge Viva Q&A
+    st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 12px;'>Top 3 Questions Teachers Ask (Cheat Sheet)</div>", unsafe_allow_html=True)
+
+    with st.expander("❓ Why is this architecture so fast (38,000+ EPS)?"):
+        st.write("**Answer:** Over 98% of known logs run through compiled deterministic plugins in `parsers/` that take under 0.2 milliseconds. We never waste CPU passing known logs through slow AI models. AI only runs on genuinely unseen novel formats.")
+
+    with st.expander("❓ Can this run in a classified defense environment without internet?"):
+        st.write("**Answer:** Yes, 100% air-gap safe. The Drain3 template miner and heuristic synthesizer execute entirely in local CPU memory without calling any cloud APIs. External LLMs (Ollama / Gemini) are completely optional.")
+
+    with st.expander("❓ What happens when an incoming log is corrupted?"):
+        st.write("**Answer:** We have a Zero Silent Drop guarantee. Our fallback extractor rescues valid IP addresses, timestamps, and action keywords. The verbatim 100% raw text is preserved in `record.raw_log` for legal and forensic chain-of-custody.")

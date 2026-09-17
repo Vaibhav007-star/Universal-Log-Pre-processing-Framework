@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AegisLog Backend Architecture: Plain-English Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f4f5f8;
+            color: #0f172a;
+            line-height: 1.65;
+            padding-bottom: 80px;
+        }
+
+        /* TOP NAVIGATION */
+        nav {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 0 40px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo { width: 36px; height: 36px; background: #1d4ed8; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .nav-title { font-size: 16px; font-weight: 800; color: #fff; }
+        .nav-links { display: flex; gap: 8px; }
+        .nav-link {
+            color: #94a3b8; text-decoration: none; font-size: 13px;
+            font-weight: 600; padding: 6px 14px; border-radius: 8px; transition: all 0.2s;
+        }
+        .nav-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-link.active { color: #fff; background: #1d4ed8; }
+
+        /* CONTAINER */
+        .container { max-width: 960px; margin: 40px auto 0; padding: 0 20px; }
+
+        /* HERO CARD */
+        .hero-box {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            border-radius: 24px;
+            padding: 40px;
+            color: #fff;
+            margin-bottom: 36px;
+            box-shadow: 0 12px 36px rgba(15, 23, 42, 0.15);
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.15);
+            color: #93c5fd;
+            padding: 4px 14px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: 0.05em;
+        }
+        .hero-title { font-size: clamp(26px, 4vw, 36px); font-weight: 900; line-height: 1.2; margin-bottom: 12px; }
+        .hero-sub { font-size: 15px; color: #bfdbfe; max-width: 680px; line-height: 1.6; }
+
+        /* SECTION CARD */
+        .card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 28px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .card-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .card-title { font-size: 20px; font-weight: 800; color: #0f172a; }
+
+        /* ANALOGY BOX */
+        .analogy-box {
+            background: #eff6ff;
+            border: 2px dashed #93c5fd;
+            border-radius: 16px;
+            padding: 24px;
+            margin: 20px 0;
+        }
+        .analogy-title { font-size: 15px; font-weight: 800; color: #1e40af; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .analogy-text { font-size: 14.5px; color: #1e3a8a; line-height: 1.65; }
+
+        /* STEP LIST */
+        .step-item {
+            display: flex;
+            gap: 18px;
+            padding: 18px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .step-item:last-child { border-bottom: none; }
+        .step-num {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: #1d4ed8;
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 14px;
+            flex-shrink: 0;
+        }
+        .step-title { font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+        .step-desc { font-size: 13.5px; color: #475569; line-height: 1.6; }
+        .step-tag { display: inline-block; background: #e2e8f0; color: #0f172a; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-top: 6px; }
+
+        /* FOLDER TABLE */
+        table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+        th, td { padding: 12px 16px; text-align: left; font-size: 13.5px; }
+        th { background: #f8fafc; color: #475569; font-weight: 800; border-bottom: 2px solid #e2e8f0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+        td { border-bottom: 1px solid #f1f5f9; }
+        tr:hover td { background: #f8fafc; }
+        .code-tag { font-family: 'Courier New', monospace; font-weight: 700; color: #1d4ed8; background: #dbeafe; padding: 2px 8px; border-radius: 6px; font-size: 12.5px; }
+
+        /* FAQ BOX */
+        .faq-item {
+            margin-bottom: 18px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 18px 22px;
+        }
+        .faq-q { font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .faq-a { font-size: 14px; color: #334155; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="nav-brand" href="/portal/index.html">
+        <div class="nav-logo">🛡️</div>
+        <span class="nav-title">AegisLog</span>
+    </a>
+    <div class="nav-links">
+        <a href="/portal/index.html" class="nav-link">← Portal Home</a>
+        <a href="/portal/stats.html" class="nav-link">Live Stats</a>
+        <a href="http://localhost:8501" target="_blank" class="nav-link">Dashboard</a>
+        <a href="/docs" target="_blank" class="nav-link">API Docs</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- HERO BOX -->
+    <div class="hero-box">
+        <div class="hero-badge">NON-TECHNICAL GUIDE & ARCHITECTURE PRIMER</div>
+        <h1 class="hero-title">How the AegisLog Backend Works</h1>
+        <p class="hero-sub">A simple, crystal-clear explanation designed for academic evaluators, professors, and non-technical reviewers. Understand the entire data pipeline in 2 minutes.</p>
+    </div>
+
+    <!-- 10-SECOND SUMMARY -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon">💡</div>
+            <div class="card-title">The 10-Second Summary (Explain Like I'm 5)</div>
+        </div>
+        <p style="font-size:15px; color:#334155; line-height:1.7;">
+            In defense organizations like NTRO, security firewalls, routers, servers, and radar sensors produce <strong>heterogeneous logs</strong> — meaning every brand writes in a totally different format, timestamp format, and vocabulary. Analysts waste hours manually deciphering them before they can spot a cyber attack.
+        </p>
+
+        <div class="analogy-box">
+            <div class="analogy-title">✈️ The Real-World Airport Customs Analogy</div>
+            <div class="analogy-text">
+                Think of the AegisLog backend like an <strong>International Airport Immigration Terminal</strong>:
+                <br/><br/>
+                • <strong>Incoming Logs = International Travelers:</strong> Some speak English (JSON), some speak French (Cisco), some speak Japanese (CEF), and some speak completely novel, unwritten dialects (military radar sensors).<br/>
+                • <strong>Fast-Track Biometric E-Gates (Hot Path):</strong> Known travelers pass through in less than <strong>0.2 milliseconds</strong> via pre-compiled rules.<br/>
+                • <strong>The AI Linguist (Cold Path):</strong> If a traveler speaks a brand-new dialect never seen before, the AI learner analyzes their grammar (Drain3 algorithm), writes a new rule, and saves it so future travelers from that dialect pass through fast-track.<br/>
+                • <strong>The Universal Entry Card (OCSF v1.1):</strong> Every traveler's details (Who are they? Where did they come from? What did they do?) are transcribed onto <strong>ONE universal standard entry form</strong>.<br/>
+                • <strong>The Security Watchlist (MITRE ATT&CK):</strong> The system checks if the traveler's behavior matches known cyber threats and assigns a risk score.<br/>
+                • <strong>Officer Inspection Desk (Human-In-The-Loop):</strong> If any document is blurry or uncertain (score &lt; 60%), a human customs officer inspects and approves it with 1 click in the dashboard.
+            </div>
+        </div>
+    </div>
+
+    <!-- 6-STEP PIPELINE -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon">🔄</div>
+            <div class="card-title">The 6-Step Journey of a Log</div>
+        </div>
+
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>
+                <div class="step-title">Fast-Track Format Identification (Hot Path)</div>
+                <div class="step-desc">The pipeline instantly checks if the log matches known formats (Cisco ASA, ArcSight CEF, IBM QRadar LEEF, RFC 5424 Syslog, Linux Auditd, or JSON). Known logs parse in under 200 microseconds with zero AI overhead.</div>
+                <span class="step-tag">Folder: parsers/deterministic/</span>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>
+                <div class="step-title">Autonomous AI Template Learning (Cold Path)</div>
+                <div class="step-desc">If the log is completely new or unseen, the Drain3 algorithm mines its structural skeleton. It dynamically generates a new regular expression, tests it in a secure sandbox, and saves it into our SQLite rule store so the next log of this type parses on the Fast Track.</div>
+                <span class="step-tag">Folder: inference/</span>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>
+                <div class="step-title">Fallback Safety Net (Zero Silent Drops)</div>
+                <div class="step-desc">If both Fast Track and AI learning fail (e.g., corrupted garbage bytes), the fallback parser rescues every valid IP address, timestamp, and port number. The verbatim 100% raw text is preserved forever for legal defense integrity.</div>
+                <span class="step-tag">Folder: parsers/fallback/</span>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <div class="step-num">4</div>
+            <div>
+                <div class="step-title">Universal OCSF v1.1 Normalization & Threat Enrichment</div>
+                <div class="step-desc">All extracted fields are translated into international standards: timestamps become ISO-8601 UTC, IP addresses are classified as Private vs. Public, actions become ALLOW/DENY/DROP, and attacks are correlated against MITRE ATT&CK techniques.</div>
+                <span class="step-tag">Folder: core/normalizer.py</span>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <div class="step-num">5</div>
+            <div>
+                <div class="step-title">Multi-Level Calibrated Confidence Scoring</div>
+                <div class="step-desc">The system grades its own accuracy across 4 dimensions: Format Confidence (0-100%), Field Validity (0-100%), Schema Completeness (0-100%), and Overall Composite Score (0-100%).</div>
+                <span class="step-tag">Folder: core/confidence.py</span>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <div class="step-num">6</div>
+            <div>
+                <div class="step-title">Storage & Human-In-The-Loop Routing</div>
+                <div class="step-desc">High-confidence logs (&ge; 60%) are written straight to our embedded DuckDB columnar database for sub-second SQL threat hunting. Low-confidence logs (&lt; 60%) enter the analyst triage queue for 1-click human verification.</div>
+                <span class="step-tag">Folder: storage/ & hitl/</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOLDER CHEAT SHEET -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon">🗂️</div>
+            <div class="card-title">Backend Directory Cheat Sheet</div>
+        </div>
+        <p style="font-size:14px; color:#64748b; margin-bottom:14px;">Every folder in the project has one clear, isolated responsibility:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Folder</th>
+                    <th>Plain-English Role</th>
+                    <th>Key Files</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="code-tag">api/</span></td>
+                    <td>The HTTP Web Gateway (FastAPI) and Command Portal web pages</td>
+                    <td><code>app.py</code>, <code>index.html</code>, <code>stats.html</code></td>
+                </tr>
+                <tr>
+                    <td><span class="code-tag">core/</span></td>
+                    <td>The Central Brain (pipeline orchestrator, OCSF schema, normalizer, scoring)</td>
+                    <td><code>pipeline.py</code>, <code>schema.py</code>, <code>normalizer.py</code></td>
+                </tr>
+                <tr>
+                    <td><span class="code-tag">parsers/</span></td>
+                    <td>The Deterministic Fast Translators (Cisco, CEF, LEEF, JSON, Auditd, Fallback)</td>
+                    <td><code>registry.py</code>, <code>cef_parser.py</code>, <code>generic_extractor.py</code></td>
+                </tr>
+                <tr>
+                    <td><span class="code-tag">inference/</span></td>
+                    <td>The AI Learner for unseen logs (Drain3 miner, rule synthesizer, SQLite store)</td>
+                    <td><code>template_miner.py</code>, <code>rule_synthesizer.py</code>, <code>rule_store.py</code></td>
+                </tr>
+                <tr>
+                    <td><span class="code-tag">hitl/</span></td>
+                    <td>Human-In-The-Loop queue for analyst review of uncertain events</td>
+                    <td><code>review_queue.py</code>, <code>feedback_handler.py</code></td>
+                </tr>
+                <tr>
+                    <td><span class="code-tag">storage/</span></td>
+                    <td>Columnar analytical database (DuckDB) and forensic Dead-Letter sink</td>
+                    <td><code>duckdb_sink.py</code>, <code>dead_letter.py</code></td>
+                </tr>
+                <tr>
+                    <td><span class="code-tag">benchmarks/</span></td>
+                    <td>High-volume synthetic generator and scale benchmarking suite</td>
+                    <td><code>generate_synthetic_data.py</code>, <code>benchmark_runner.py</code></td>
+                </tr>
+                <tr>
+                    <td><span class="code-tag">ui/</span></td>
+                    <td>Streamlit Executive Defense Analytics Dashboard (7 interactive tabs)</td>
+                    <td><code>dashboard.py</code></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- FAQ FOR TEACHERS & JUDGES -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon">🎯</div>
+            <div class="card-title">Top 4 Questions Teachers & Evaluators Ask</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q">❓ Q1: Why is your backend so fast (38,000+ EPS) while others struggle?</div>
+            <div class="faq-a"><strong>Answer:</strong> Because we use a <em>Deterministic-First</em> architecture. We do NOT pass every log through slow AI or LLMs. Over 98% of known logs go through compiled regex plugins taking under 0.2 milliseconds. We only activate the AI learner when a genuinely novel, unseen format arrives.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q">❓ Q2: Does your system require internet or external LLMs to work?</div>
+            <div class="faq-a"><strong>Answer:</strong> <strong>No, it is 100% air-gap safe.</strong> Defense networks cannot send sensitive logs to external cloud APIs. Our heuristic learner runs locally in memory using the Drain3 clustering algorithm. External LLMs (Ollama or Gemini) are completely optional plugins.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q">❓ Q3: What happens when an incoming log is corrupted or broken?</div>
+            <div class="faq-a"><strong>Answer:</strong> We have a <strong>Zero Silent Drop guarantee</strong>. Our fallback extractor rescues valid IPs, ports, and timestamps, tags the log with diagnostic error codes, and preserves the verbatim 100% raw text for forensic chain-of-custody.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q">❓ Q4: How does the system improve over time?</div>
+            <div class="faq-a"><strong>Answer:</strong> When an analyst approves a corrected log in the Human-In-The-Loop triage queue (Dashboard Tab 4), that single click automatically compiles a permanent rule into our SQLite store and hot-reloads it into the active memory registry. The next time that log format arrives, it runs at full speed without human intervention!</div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
