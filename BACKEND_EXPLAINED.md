@@ -141,3 +141,4 @@ Here is the exact step-by-step path every single log takes from arrival to stora
 | `inference/rule_store.py` | SQLite database storing learned rules so they persist across restarts. |
 | `hitl/review_queue.py` | The waiting room for uncertain logs awaiting human review. |
 | `storage/duckdb_sink.py` | Fast embedded columnar database for sub-second SQL threat analytics. |
+
